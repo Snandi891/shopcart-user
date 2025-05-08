@@ -1,10 +1,11 @@
 import { View, Text, Image, TouchableOpacity, ScrollView } from "react-native";
 import React, { useState } from "react";
+import { moderateScale, scale, verticalScale } from "react-native-size-matters";
 
 const RemoveCart = ({ item, onRemoveItem, onAddToCart }) => {
   const [showModel, setShowModel] = useState(false);
   const [selectedUser, setSelectedUser] = useState(undefined);
-  const postApiUrl = "https://project-x-five-smoky.vercel.app/api/cart";
+  const postApiUrl = " https://project-x-five-smoky.vercel.app/api/cart";
   const [responseMessage, setResponseMessage] = useState("");
 
   const sendPostRequest = async () => {
@@ -41,7 +42,7 @@ const RemoveCart = ({ item, onRemoveItem, onAddToCart }) => {
     <View
       style={{
         flex: 1,
-        padding: 10,
+        padding: moderateScale(10),
         justifyContent: "center",
         alignItems: "center",
       }}
@@ -50,14 +51,14 @@ const RemoveCart = ({ item, onRemoveItem, onAddToCart }) => {
         <View
           style={{
             backgroundColor: "#fff",
-            // padding: 10,
-            paddingHorizontal: 50,
-            borderRadius: 10,
-            paddingBottom: 10,
+            // padding: moderateScale(10),
+            paddingHorizontal: 20,
+            borderRadius: moderateScale(10),
+            paddingBottom: moderateScale(10),
             shadowColor: "#000",
             shadowOpacity: 0.3,
             elevation: 5,
-            margin: 10,
+            margin: moderateScale(10),
           }}
         >
           <View
@@ -73,8 +74,8 @@ const RemoveCart = ({ item, onRemoveItem, onAddToCart }) => {
               style={{
                 width: 100,
                 height: 100,
-                resizeMode: "contain",
-                marginTop: 10,
+                resizeMode: "cover",
+                marginTop: moderateScale(7),
                 borderRadius: 20,
                 backgroundColor: "#fff",
                 alignSelf: "center",
@@ -82,20 +83,20 @@ const RemoveCart = ({ item, onRemoveItem, onAddToCart }) => {
                 shadowColor: "cyan",
               }}
             />
-            <View style={{ gap: 10, paddingTop: 10 }}>
+            <View style={{ gap: 10, paddingTop: moderateScale(10) }}>
               <Text
                 numberOfLines={2}
                 style={{
                   numberOfLines: 0.1,
                   ellipsizeMode: "tail",
                   maxWidth: 200,
-                  fontSize: 15,
+                  fontSize: moderateScale(15),
                 }}
               >
                 Name : {item.title}
               </Text>
 
-              <Text style={{ fontSize: 20, fontWeight: "bold" }}>
+              <Text style={{ fontSize: moderateScale(20), fontWeight: "bold" }}>
                 Price : {" ₹ " + item.price}
               </Text>
             </View>
@@ -110,43 +111,51 @@ const RemoveCart = ({ item, onRemoveItem, onAddToCart }) => {
           >
             <TouchableOpacity
               style={{
-                borderRadius: 10,
-                padding: 10,
+                borderRadius: moderateScale(10),
+                padding: moderateScale(10),
                 backgroundColor: "peru",
-                marginTop: 20,
+                marginTop: moderateScale(20),
                 elevation: 10,
               }}
               onPress={() => {
                 onRemoveItem();
               }}
             >
-              <Text style={{ fontSize: 20, fontWeight: "bold" }}>remove</Text>
+              <Text style={{ fontSize: moderateScale(20), fontWeight: "bold" }}>
+                remove
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => {
                 onAddToCart(item);
               }}
               style={{
-                borderRadius: 10,
-                padding: 10,
+                borderRadius: moderateScale(10),
+                padding: moderateScale(10),
                 backgroundColor: "lime",
-                marginTop: 20,
+                marginTop: moderateScale(20),
                 elevation: 10,
               }}
             >
-              <Text style={{ fontSize: 20, fontWeight: "bold" }}>Buy Now</Text>
+              <Text style={{ fontSize: moderateScale(20), fontWeight: "bold" }}>
+                Recart
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
-      <TouchableOpacity
-        style={{ padding: 10, backgroundColor: "green" }}
+      {/* <TouchableOpacity
+        style={{
+          padding: moderateScale(10),
+          backgroundColor: "green",
+          borderRadius: 20,
+        }}
         onPress={() => {
           sendPostRequest();
         }}
       >
-        <Text>yyy</Text>
-      </TouchableOpacity>
+        <Text>book</Text>
+      </TouchableOpacity> */}
     </View>
   );
 };

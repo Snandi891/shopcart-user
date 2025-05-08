@@ -1,12 +1,13 @@
 import { View, Text, Image, TouchableOpacity, ScrollView } from "react-native";
 import React from "react";
+import { moderateScale, scale, verticalScale } from "react-native-size-matters";
 
 const RemoveWishlist = ({ item, onAddToCart, onRemoveFromWishlist }) => {
   return (
     <View
       style={{
         flex: 1,
-        padding: 10,
+        padding: moderateScale(10),
         justifyContent: "center",
         alignItems: "center",
         backgroundColor: "#fff",
@@ -16,14 +17,14 @@ const RemoveWishlist = ({ item, onAddToCart, onRemoveFromWishlist }) => {
         <View
           style={{
             backgroundColor: "#fff",
-            // padding: 10,
-            paddingHorizontal: 50,
-            borderRadius: 10,
-            paddingBottom: 10,
+            // padding: moderateScale(10),
+            paddingHorizontal: 20,
+            borderRadius: moderateScale(10),
+            paddingBottom: moderateScale(10),
             shadowColor: "#000",
             shadowOpacity: 0.3,
             elevation: 5,
-            margin: 10,
+            margin: moderateScale(10),
           }}
         >
           <View
@@ -39,8 +40,8 @@ const RemoveWishlist = ({ item, onAddToCart, onRemoveFromWishlist }) => {
               style={{
                 width: 100,
                 height: 100,
-                resizeMode: "contain",
-                marginTop: 10,
+                resizeMode: "cover",
+                marginTop: moderateScale(7),
                 borderRadius: 20,
                 backgroundColor: "#fff",
                 alignSelf: "center",
@@ -48,20 +49,20 @@ const RemoveWishlist = ({ item, onAddToCart, onRemoveFromWishlist }) => {
                 shadowColor: "cyan",
               }}
             />
-            <View style={{ gap: 10, paddingTop: 10 }}>
+            <View style={{ gap: 10, paddingTop: moderateScale(10) }}>
               <Text
                 numberOfLines={2}
                 style={{
                   numberOfLines: 0.1,
                   ellipsizeMode: "tail",
                   maxWidth: 200,
-                  fontSize: 15,
+                  fontSize: moderateScale(15),
                 }}
               >
                 Name : {item.title}
               </Text>
 
-              <Text style={{ fontSize: 20, fontWeight: "bold" }}>
+              <Text style={{ fontSize: moderateScale(20), fontWeight: "bold" }}>
                 Price : {" ₹ " + item.price}
               </Text>
             </View>
@@ -76,31 +77,35 @@ const RemoveWishlist = ({ item, onAddToCart, onRemoveFromWishlist }) => {
           >
             <TouchableOpacity
               style={{
-                borderRadius: 10,
-                padding: 10,
+                borderRadius: moderateScale(10),
+                padding: moderateScale(10),
                 backgroundColor: "peru",
-                marginTop: 20,
+                marginTop: moderateScale(20),
                 elevation: 10,
               }}
               onPress={() => {
                 onRemoveFromWishlist();
               }}
             >
-              <Text style={{ fontSize: 20, fontWeight: "bold" }}>remove</Text>
+              <Text style={{ fontSize: moderateScale(20), fontWeight: "bold" }}>
+                remove
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => {
                 onAddToCart(item);
               }}
               style={{
-                borderRadius: 10,
-                padding: 10,
+                borderRadius: moderateScale(10),
+                padding: moderateScale(10),
                 backgroundColor: "lime",
-                marginTop: 20,
+                marginTop: moderateScale(20),
                 elevation: 10,
               }}
             >
-              <Text style={{ fontSize: 20, fontWeight: "bold" }}>Buy Now</Text>
+              <Text style={{ fontSize: moderateScale(20), fontWeight: "bold" }}>
+                Add Cart
+              </Text>
             </TouchableOpacity>
           </View>
         </View>

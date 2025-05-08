@@ -1,16 +1,15 @@
-import {
-  FlatList,
-  StyleSheet,
-  Text,
-  Image,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { FlatList, StyleSheet, Text, View, Dimensions } from "react-native";
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { addItemToCart, addToWishlist } from "../redux/actions/Actions";
 import BusinessName from "./BusinessName";
+import * as Animatable from "react-native-animatable";
+import CountdownTimer from "../../configs/CountdownTimer";
+import { moderateScale } from "react-native-size-matters";
+import LottieView from "lottie-react-native";
+
+const { width } = Dimensions.get("window");
 
 const Busness = () => {
   const dispatch = useDispatch();
@@ -22,56 +21,71 @@ const Busness = () => {
   }, []);
 
   const getProducts = async () => {
-    const URL = `https://project-x-five-smoky.vercel.app/api/products`;
-    const response = await axios.get(URL);
-    setProducts(response.data);
-    setIsLoading(false);
+    try {
+      const URL = `https://project-x-five-smoky.vercel.app/api/products`;
+      const response = await axios.get(URL);
+      setProducts(response.data);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <View style={{ padding: 10 }}>
-      <View>
-        <Text
-          style={{
-            marginTop: 1,
-            fontSize: 20,
-            fontWeight: "800",
-          }}
+    <View style={{ padding: moderateScale(2), marginTop: moderateScale(5) }}>
+      <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+        <Animatable.View
+          style={{ paddingBottom: moderateScale(10) }}
+          animation={"slideInUp"}
+          duration={2000}
         >
-          Flash Sale
-        </Text>
+          <Text
+            style={{
+              fontSize: moderateScale(20),
+              fontWeight: "700",
+              paddingRight: moderateScale(7),
+            }}
+          >
+            Flash Sale - Ends On
+          </Text>
+        </Animatable.View>
+        <View style={{ paddingRight: moderateScale(7) }}>
+          <CountdownTimer />
+        </View>
       </View>
-      {/* <View
-        style={{
-          gap: 7,
-          backgroundColor: "yellow",
-          flexDirection: "row",
-          paddingHorizontal: 8,
-          marginTop: 10,
-          paddingVertical: 5,
-          borderRadius: 12,
-          marginRight: 230,
-        }}
-      >
-        <Ionicons name="time-outline" size={16} />
-        <Text>00:00:00</Text>
-      </View> */}
-      <FlatList
-        data={products}
-        showsHorizontalScrollIndicator={false}
-        horizontal={true}
-        renderItem={({ index, item }) => (
-          <BusinessName
-            item={item}
-            onAddWishlist={(x) => {
-              dispatch(addToWishlist(x));
-            }}
-            onAddToCart={(x) => {
-              dispatch(addItemToCart(x));
-            }}
-          />
-        )}
-      />
+
+      {isLoading ? (
+        <LottieView
+          source={require("../../animation/Animation - 1746201883317.json")}
+          autoPlay
+          loop
+          style={{
+            width: width * 0.5,
+            height: width * 0.5,
+            alignSelf: "center",
+          }}
+        />
+      ) : products.length === 0 ? (
+        <Text style={{ textAlign: "center", marginTop: 20, fontSize: 16 }}>
+          Sorry sir, no products found.
+        </Text>
+      ) : (
+        <FlatList
+          data={products}
+          showsHorizontalScrollIndicator={false}
+          horizontal
+          keyExtractor={(item, index) => index.toString()}
+          renderItem={({ index, item }) => (
+            <BusinessName
+              item={item}
+              index={index}
+              onAddWishlist={(x) => dispatch(addToWishlist(x))}
+              onAddToCart={(x) => dispatch(addItemToCart(x))}
+            />
+          )}
+        />
+      )}
     </View>
   );
 };

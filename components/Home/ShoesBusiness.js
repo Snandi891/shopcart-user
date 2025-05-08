@@ -5,11 +5,15 @@ import {
   Image,
   TouchableOpacity,
   View,
-  ActivityIndicator,
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Link } from "expo-router";
+import { moderateScale, scale, verticalScale } from "react-native-size-matters";
+import * as Animatable from "react-native-animatable";
+import LottieView from "lottie-react-native";
+
+const AnimatedBn = Animatable.createAnimatableComponent(TouchableOpacity);
 
 const ShoesBusiness = () => {
   const [products, setProducts] = useState([]);
@@ -21,26 +25,33 @@ const ShoesBusiness = () => {
 
   const getProducts = async () => {
     setIsLoading(true);
-    const URL = `https://project-x-five-smoky.vercel.app/api/shoes`;
-    const response = await axios.get(URL);
-    setProducts(response.data);
-    setIsLoading(false);
+    try {
+      const URL = `https://project-x-five-smoky.vercel.app//api/shoes`;
+      const response = await axios.get(URL);
+      setProducts(response.data);
+    } catch (error) {
+      console.error("Error fetching shoes:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <View>
-      {products?.length > 0 && isLoading == false ? (
+    <View style={{ flex: 1 }}>
+      {products?.length > 0 && !isLoading ? (
         <FlatList
           data={products}
+          keyExtractor={(item) => item._id}
           renderItem={({ index, item }) => (
             <Link href={`/shoes-details/${item._id}`} asChild>
-              <TouchableOpacity
+              <AnimatedBn
+                animation={"slideInLeft"}
+                duration={1000 + (index + 1) * 100}
                 style={{
-                  padding: 10,
-                  margin: 10,
+                  padding: moderateScale(10),
+                  margin: moderateScale(10),
                   borderRadius: 15,
                   backgroundColor: "#fff",
-                  display: "flex",
                   flexDirection: "row",
                   gap: 20,
                 }}
@@ -50,8 +61,6 @@ const ShoesBusiness = () => {
                     width: 163,
                     height: 160,
                     borderRadius: 19,
-
-                    //   backgroundColor: "#f0ffff",
                     alignItems: "center",
                   }}
                 >
@@ -69,32 +78,33 @@ const ShoesBusiness = () => {
                   <Text style={{ fontWeight: "800", fontSize: 16 }}>
                     {item.title}
                   </Text>
-                  <Text style={{}}>{"Price : " + item.price}</Text>
+                  <Text>{"Price : " + item.price}</Text>
 
                   <View
                     style={{
-                      display: "flex",
                       flexDirection: "row",
                       justifyContent: "space-between",
                     }}
                   >
                     <View
                       style={{
-                        paddingTop: 10,
-                        display: "flex",
+                        paddingTop: moderateScale(10),
                         flexDirection: "row",
                       }}
                     >
                       <Image
                         source={require("../../Images/star.png")}
-                        style={{ width: 15, height: 15 }}
+                        style={{
+                          width: scale(15),
+                          height: verticalScale(15),
+                        }}
                       />
                       <Text
                         style={{
-                          fontSize: 15,
+                          fontSize: moderateScale(15),
                           fontWeight: "600",
-                          paddingLeft: 10,
-                          paddingBottom: 5,
+                          paddingLeft: moderateScale(10),
+                          paddingBottom: moderateScale(5),
                         }}
                       >
                         4.5
@@ -105,33 +115,42 @@ const ShoesBusiness = () => {
                     style={{
                       fontFamily: "outfit",
                       backgroundColor: "green",
-                      padding: 10,
+                      padding: moderateScale(10),
                       textAlign: "center",
                       color: "#fff",
-                      fontSize: 15,
+                      fontSize: moderateScale(15),
                       borderRadius: 15,
                     }}
                   >
                     Buy Now
                   </Text>
                 </View>
-              </TouchableOpacity>
+              </AnimatedBn>
             </Link>
           )}
         />
       ) : isLoading ? (
-        <ActivityIndicator size={"large"} style={{ marginTop: "60%" }} />
+        <LottieView
+          source={require("../../animation/Animation - 1746197477833.json")}
+          autoPlay
+          loop
+          style={{
+            width: 200,
+            height: 200,
+            alignSelf: "center",
+            marginTop: "50%",
+          }}
+        />
       ) : (
         <View
           style={{
             justifyContent: "center",
-            alignContent: "center",
             alignItems: "center",
-            padding: 20,
-            margin: 10,
+            padding: moderateScale(2),
+            margin: moderateScale(10),
           }}
         >
-          <Text style={{ fontSize: 20, fontWeight: "bold" }}>
+          <Text style={{ fontSize: moderateScale(20), fontWeight: "bold" }}>
             No Product Found
           </Text>
         </View>

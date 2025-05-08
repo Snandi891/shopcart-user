@@ -1,67 +1,77 @@
 // onPress={() => router.push("/home")}
 
-import { View, Text, ImageBackground, Dimensions } from "react-native";
+import {
+  View,
+  Text,
+  ImageBackground,
+  Dimensions,
+  TouchableOpacity,
+} from "react-native";
 import React from "react";
-import { TouchableOpacity } from "react-native";
 import LottieView from "lottie-react-native";
 import { useRouter } from "expo-router";
 import ElevatedView from "react-native-elevated-view";
 import { scale, verticalScale, moderateScale } from "react-native-size-matters";
+import * as Animatable from "react-native-animatable";
+
+const AnimatedBn = Animatable.createAnimatableComponent(TouchableOpacity);
 
 const { height } = Dimensions.get("window");
-const signIn = () => {
+const SignIn = () => {
   const router = useRouter();
   return (
     <View style={{ flex: 1 }}>
       <View>
         <ImageBackground
-          resizeMode="cover"
           source={require("../Images/home.png")}
-          style={{ height: height }}
+          style={{ height: height, resizeMode: "cover" }}
         >
           <View style={{ height: height }}>
             <View style={{ paddingHorizontal: 20, paddingTop: 40 }}>
-              <Text
+              <Animatable.Text
                 style={{
-                  fontSize: 20,
-                  color: "#111",
+                  fontSize: moderateScale(20),
+                  color: "#fff",
                   textAlign: "left",
-                  fontWeight: "600",
+                  fontWeight: "800",
                 }}
+                animation={"fadeInUp"}
+                delay={0}
               >
                 Enjoy the trip with
-              </Text>
-              <Text
+              </Animatable.Text>
+              <Animatable.Text
                 style={{
                   fontSize: 30,
                   color: "#760eb3",
                   textAlign: "left",
                   fontWeight: "800",
-                  marginTop: 10,
+                  marginTop: moderateScale(7),
                 }}
+                animation={"fadeInUp"}
+                delay={300}
               >
                 Good Moments
-              </Text>
-              <Text
+              </Animatable.Text>
+              <Animatable.Text
                 style={{
                   fontSize: 18,
-                  color: "#360c4f",
+                  color: "#e7d5f5",
                   textAlign: "left",
                   fontWeight: "600",
                 }}
+                animation={"fadeInUp"}
+                delay={600}
               >
-                So Let's start your jurney ,chosse destination - then Choose
-                Traveler and Go for trip
-              </Text>
+                So Let's start your journey, choose destination - then choose
+                Traveler and go for trip.
+              </Animatable.Text>
             </View>
             <View
               style={{
                 aspectRatio: 1,
                 height: 400,
-                margin: 10,
-                // paddingLeft: 20,
-                // justifyContent: "center",
-                // alignItems: "center",
+                margin: moderateScale(10),
               }}
             >
               <LottieView
@@ -84,17 +94,19 @@ const signIn = () => {
                 right: 0,
               }}
             >
-              <TouchableOpacity
-                onPress={() => router.push("/home")}
+              <AnimatedBn
+                onPress={() => router.push("/splash")}
                 style={{ paddingTop: moderateScale(75) }}
+                animation="fadeInUp"
+                delay={200}
               >
                 <ElevatedView
                   style={{
                     width: scale(100),
                     borderRadius: 60,
                     height: verticalScale(50),
-                    margin: 10,
-                    backgroundColor: "white",
+                    margin: moderateScale(10),
+                    backgroundColor: "#7b26bd",
                     justifyContent: "center",
                     alignItems: "center",
                     shadowColor: "blue",
@@ -107,11 +119,13 @@ const signIn = () => {
                     elevation: 24,
                   }}
                 >
-                  <Text style={{ fontSize: 25, fontWeight: "bold" }}>
+                  <Text
+                    style={{ fontSize: 25, fontWeight: "bold", color: "#fff" }}
+                  >
                     Enter
                   </Text>
                 </ElevatedView>
-              </TouchableOpacity>
+              </AnimatedBn>
             </View>
           </View>
         </ImageBackground>
@@ -120,4 +134,4 @@ const signIn = () => {
   );
 };
 
-export default signIn;
+export default SignIn;

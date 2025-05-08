@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity } from "react-native";
 import React, { useState } from "react";
 import AnimatedTost from "../animated/AnimatedTost";
+import { moderateScale, scale, verticalScale } from "react-native-size-matters";
 
 const New = () => {
   const [visible, setVisible] = useState(false);

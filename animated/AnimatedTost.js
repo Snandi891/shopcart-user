@@ -6,6 +6,7 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
+import { moderateScale, scale, verticalScale } from "react-native-size-matters";
 
 const AnimatedTost = ({ type, message, visible }) => {
   const YValue = useSharedValue(0);
@@ -61,7 +62,7 @@ const AnimatedTost = ({ type, message, visible }) => {
           fontSize: 16,
           fontWeight: "800",
           color: "#000",
-          marginLeft: 10,
+          marginLeft: moderateScale(10),
         }}
       >
         {message}
@@ -76,7 +77,7 @@ const styles = StyleSheet.create({
   animatedTost: {
     width: Dimensions.get("window").width - 175,
     height: 50,
-    borderRadius: 10,
+    borderRadius: moderateScale(10),
     backgroundColor: "white",
     elevation: 17,
     shadowColor: "#000",
@@ -99,7 +100,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    marginLeft: 10,
+    marginLeft: moderateScale(10),
     justifyContent: "center",
     alignItems: "center",
   },

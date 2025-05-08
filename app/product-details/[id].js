@@ -8,16 +8,36 @@ import {
   Button,
   TouchableOpacity,
   ScrollView,
+  ActivityIndicator,
   Linking,
+  TouchableWithoutFeedback,
+  Animated,
+  Dimensions,
 } from "react-native";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import axios from "axios";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { BlurView } from "expo-blur";
 import AnimatedTost from "../../animated/AnimatedTost";
 import { useDispatch, useSelector } from "react-redux";
-import { addItemToCart } from "../../components/redux/actions/Actions";
+import LottieView from "lottie-react-native";
+import {
+  addItemToCart,
+  addToWishlist,
+  removeFromWishlist,
+} from "../../components/redux/actions/Actions";
+import { LinearGradient } from "expo-linear-gradient";
+import { TextInput } from "react-native";
+import { Alert } from "react-native";
+import { moderateScale, scale, verticalScale } from "react-native-size-matters";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Animatable from "react-native-animatable";
+import * as Location from "expo-location";
+import MapView, { Marker } from "react-native-maps";
+
+const Width = Dimensions.get("window").width;
+const AnimatedBn = Animatable.createAnimatableComponent(TouchableOpacity);
 
 const product = () => {
   const { id } = useLocalSearchParams();
@@ -48,56 +68,499 @@ const product = () => {
     setSelectedUser(product);
   };
 
+  const showAlert = () => {
+    Alert.alert(
+      "Hello!",
+      "Your packege is added in wishlist",
+      [
+        {
+          text: "OK",
+          onPress: () => console.log("OK Pressed"),
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
+  const [isWishlisted, setIsWishlisted] = useState(false);
+
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  const handlePress = () => {
+    // Animate scale pop
+    Animated.sequence([
+      Animated.timing(scaleAnim, {
+        toValue: 1.3,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    // Dispatch to wishlist
+    if (isWishlisted) {
+      dispatch(removeFromWishlist(product));
+    } else {
+      dispatch(addToWishlist(product));
+    }
+
+    setIsWishlisted(!isWishlisted);
+  };
+
+  // destination
+
+  const [userLocation, setUserLocation] = useState(null);
+  const [destination, setDestination] = useState(null);
+  const [distance, setDistance] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [showDistanceModal, setShowDistanceModal] = useState(false);
+
+  useEffect(() => {
+    const fetchProductLocation = async () => {
+      try {
+        const response = await fetch(
+          `https://project-x-five-smoky.vercel.app/api/products?id=${id}`
+        );
+        const data = await response.json();
+
+        if (data && data.place) {
+          const place = data.place;
+
+          const geocodeResponse = await fetch(
+            `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
+              place
+            )}&format=json`,
+            {
+              headers: {
+                "User-Agent": "Shopcart/1.0 (nitunandi1985@gmail.com)",
+                "Accept-Language": "en",
+              },
+            }
+          );
+
+          const geocodeData = await geocodeResponse.json();
+          // console.log("Geocode result:", geocodeData);
+
+          if (geocodeData && geocodeData.length > 0) {
+            const { lat, lon } = geocodeData[0];
+            setDestination({
+              latitude: parseFloat(lat),
+              longitude: parseFloat(lon),
+              name: place,
+            });
+          } else {
+            console.log("could not find coordinates");
+          }
+        } else {
+          Alert.alert("API Error", "No product data found.");
+        }
+      } catch (error) {
+        console.error("Error fetching product data:", error);
+        Alert.alert(
+          "Error",
+          "There was an issue fetching data or formatting it."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchProductLocation();
+    }
+  }, [id]);
+
+  useEffect(() => {
+    const getUserLocation = async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Permission Denied", "Location permission is required.");
+        return;
+      }
+
+      const userLoc = await Location.getCurrentPositionAsync({});
+      setUserLocation(userLoc.coords);
+    };
+
+    getUserLocation();
+  }, []);
+
+  function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
+    const R = 6371;
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
+
+  if (loading || !userLocation || !destination) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" />
+        <Text>Loading ...</Text>
+      </View>
+    );
+  }
+
+  const dist = getDistanceFromLatLonInKm(
+    userLocation.latitude,
+    userLocation.longitude,
+    destination.latitude,
+    destination.longitude
+  );
+
   return (
     <ScrollView>
       <View>
-        <View
-          style={{
-            position: "absolute",
-            zIndex: 10,
-            display: "flex",
-            flexDirection: "row",
-            justifyContent: "space-between",
-            width: "100%",
-            padding: 20,
-          }}
-        >
-          <TouchableOpacity onPress={() => router.back()}>
-            <Ionicons name="arrow-back-circle-sharp" size={34} color="black" />
-          </TouchableOpacity>
-          <Ionicons name="heart-outline" size={34} color="black" />
-        </View>
-        <Image
-          source={{ uri: product?.images[0] }}
+        <Animatable.View
+          animation="fadeInUpBig"
+          duration={1200}
           style={{
             width: "100%",
-            height: 250,
-            backgroundColor: "#fff",
-            resizeMode: "contain",
-            marginBottom: 30,
-          }}
-        />
-
-        <View
-          style={{
-            padding: 15,
-            backgroundColor: "#fff",
-            marginTop: -20,
-            borderRadius: 25,
-            marginBottom: 10,
+            height: Width * 0.9,
+            overflow: "hidden",
+            marginRight: moderateScale(20),
+            borderBottomRightRadius: moderateScale(19),
+            borderBottomLeftRadius: moderateScale(19),
           }}
         >
-          <Text style={{ fontSize: 15.5, fontWeight: "700" }}>
-            {product?.title}
-          </Text>
-
           <View
-            style={{ paddingTop: 10, display: "flex", flexDirection: "row" }}
+            style={{
+              position: "absolute",
+              height: "100%",
+              zIndex: 1,
+              width: "100%",
+              backgroundColor: "transparent",
+              justifyContent: "space-between",
+              padding: moderateScale(10),
+            }}
+          >
+            <View
+              style={{
+                padding: moderateScale(5),
+                borderRadius: moderateScale(50),
+                flexDirection: "row",
+                zIndex: 1,
+                justifyContent: "space-between",
+                padding: moderateScale(10),
+              }}
+            >
+              <AnimatedBn
+                animation={"slideInLeft"}
+                delay={1000}
+                duration={1000}
+                onPress={() => router.back()}
+                style={{}}
+              >
+                <Ionicons
+                  name="arrow-back-circle-sharp"
+                  size={34}
+                  color="black"
+                />
+              </AnimatedBn>
+              <AnimatedBn animation="slideInRight" delay={1000} duration={1000}>
+                <TouchableWithoutFeedback onPress={handlePress}>
+                  <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+                    <Ionicons
+                      name={isWishlisted ? "heart" : "heart-outline"}
+                      size={34}
+                      color={isWishlisted ? "red" : "white"} // ✅ manual toggle
+                    />
+                  </Animated.View>
+                </TouchableWithoutFeedback>
+              </AnimatedBn>
+            </View>
+            <View
+              style={{
+                margin: moderateScale(10),
+                backgroundColor: "#edeff561",
+                borderRadius: moderateScale(10),
+                padding: moderateScale(10),
+                marginBottom: moderateScale(10),
+              }}
+            >
+              <Animatable.View
+                animation={"fadeInLeft"}
+                delay={1000}
+                duration={2000}
+                // entering={FadeInLeft.delay(1000).duration(2000)}
+                style={{ display: "flex", flexDirection: "row" }}
+              >
+                <Image
+                  source={require("../../Images/location.png")}
+                  style={{ height: verticalScale(30), width: scale(30) }}
+                />
+                <Text
+                  style={{
+                    fontSize: moderateScale(23),
+                    color: "black",
+                    fontWeight: "700",
+                    marginLeft: moderateScale(8),
+                    borderColor: "white",
+                    borderRadius: 0.2,
+                    paddingTop: moderateScale(7),
+                  }}
+                >
+                  {product?.title}
+                </Text>
+              </Animatable.View>
+              <Animatable.View
+                animation={"fadeInLeft"}
+                delay={1000}
+                duration={2000}
+                style={{
+                  display: "flex",
+                  flexDirection: "row",
+                  marginTop: moderateScale(7),
+                  alignItems: "center",
+                }}
+              >
+                <Image
+                  source={require("../../Images/details.png")}
+                  style={{
+                    height: verticalScale(25),
+                    width: scale(25),
+                    paddingTop: moderateScale(6),
+                  }}
+                />
+                <Text
+                  style={{
+                    fontSize: moderateScale(15),
+                    color: "white",
+                    fontWeight: "400",
+                    marginLeft: moderateScale(10),
+                    marginLeft: moderateScale(6),
+                  }}
+                >
+                  {product?.short}
+                </Text>
+              </Animatable.View>
+            </View>
+          </View>
+          <Image
+            source={{ uri: product?.images[0] }}
+            style={{ width: "100%", height: "100%", resizeMode: "cover" }}
+          />
+        </Animatable.View>
+
+        <View
+          style={{
+            padding: moderateScale(15),
+            backgroundColor: "#fff",
+            marginBottom: moderateScale(10),
+          }}
+        >
+          <Animatable.View
+            animation={"fadeInLeft"}
+            delay={2000}
+            duration={1000}
+            style={{ flexDirection: "row", justifyContent: "space-between" }}
+          >
+            <View style={{ padding: moderateScale(10) }}>
+              <View style={{ flexDirection: "row" }}>
+                <Text
+                  style={{ fontSize: moderateScale(20), fontWeight: "700" }}
+                >
+                  Only{" "}
+                </Text>
+                <Text
+                  className="text-gray-500"
+                  style={{
+                    fontSize: moderateScale(23),
+                    fontWeight: "700",
+                    color: "green",
+                  }}
+                >
+                  ₹{+product?.price}
+                </Text>
+                <Text
+                  className="text-red-700"
+                  style={{
+                    fontSize: moderateScale(17),
+                    paddingTop: moderateScale(5),
+                  }}
+                >
+                  /person
+                </Text>
+              </View>
+            </View>
+            <View
+              style={{
+                justifyContent: "flex-start",
+                padding: moderateScale(10),
+              }}
+            >
+              <Text style={{ fontSize: moderateScale(17), fontWeight: "bold" }}>
+                Saller Rating
+              </Text>
+              <View
+                style={{
+                  // paddingLeft: moderateScale(10),
+                  display: "flex",
+                  flexDirection: "row",
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <Image
+                  source={require("../../Images/star.png")}
+                  style={{ width: scale(15), height: verticalScale(15) }}
+                />
+                <Image
+                  source={require("../../Images/star.png")}
+                  style={{ width: scale(15), height: verticalScale(15) }}
+                />
+                <Image
+                  source={require("../../Images/star.png")}
+                  style={{ width: scale(15), height: verticalScale(15) }}
+                />
+                <Image
+                  source={require("../../Images/star.png")}
+                  style={{ width: scale(15), height: verticalScale(15) }}
+                />
+                <Text
+                  style={{
+                    fontSize: moderateScale(17),
+                    fontWeight: "600",
+                    paddingLeft: moderateScale(10),
+                    paddingBottom: moderateScale(5),
+                  }}
+                  className="text-green-500"
+                >
+                  4.5
+                </Text>
+              </View>
+            </View>
+          </Animatable.View>
+          <LinearGradient
+            colors={["aqua", "white"]}
+            style={{
+              fontFamily: "outfit",
+              // backgroundColor: "green",
+              padding: moderateScale(10),
+              margin: moderateScale(4),
+              borderRadius: moderateScale(25),
+
+              borderColor: "#000",
+              elevation: 30,
+              color: "#fff",
+            }}
           >
             <Text
               style={{
-                fontSize: 20,
-                paddingTop: 7,
+                alignSelf: "center",
+                padding: moderateScale(2),
+                fontSize: moderateScale(20),
+                color: "black",
+                fontWeight: "700",
+              }}
+            >
+              -----:Hurry Up Guyes:-----
+            </Text>
+          </LinearGradient>
+
+          <View style={{ marginTop: 5 }}>
+            <TouchableOpacity
+              style={{
+                borderRadius: 10,
+                padding: 10,
+                backgroundColor: "white",
+                elevation: 5,
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+              onPress={() => setShowDistanceModal(true)}
+            >
+              <Text
+                style={{ fontSize: 18, color: "black", fontWeight: "bold" }}
+              >
+                Show Lodcation
+              </Text>
+            </TouchableOpacity>
+
+            <Modal visible={showDistanceModal} animationType="slide">
+              <View style={styles.container1}>
+                <MapView
+                  style={styles.map}
+                  initialRegion={{
+                    latitude: userLocation.latitude,
+                    longitude: userLocation.longitude,
+                    latitudeDelta: 0.1,
+                    longitudeDelta: 0.1,
+                  }}
+                >
+                  <Marker coordinate={userLocation} title="You are here" />
+                  <Marker coordinate={destination} title={destination.name} />
+                </MapView>
+                <View style={styles.info}>
+                  <Text>Distance to destination: {dist.toFixed(2)} km</Text>
+                  <Text>
+                    Directions: From your current location to {destination.name}
+                    .
+                  </Text>
+                  <Button
+                    title="Close"
+                    onPress={() => setShowDistanceModal(false)}
+                  />
+                </View>
+              </View>
+            </Modal>
+          </View>
+
+          <Animatable.View
+            animation={"fadeInLeft"}
+            delay={2000}
+            duration={1000}
+            style={{
+              paddingTop: moderateScale(10),
+              display: "flex",
+              flexDirection: "row",
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 19,
+                paddingTop: moderateScale(7),
+                fontWeight: "600",
+              }}
+            >
+              Packege Price :
+            </Text>
+            <Text
+              style={{
+                fontSize: 19,
+                paddingTop: moderateScale(7),
+                fontWeight: "800",
+                color: "green",
+              }}
+            >
+              {"   ₹" + product?.offer}
+            </Text>
+          </Animatable.View>
+          <Animatable.View
+            animation={"fadeInLeft"}
+            delay={2200}
+            duration={1000}
+            style={{
+              paddingTop: moderateScale(10),
+              display: "flex",
+              flexDirection: "row",
+            }}
+          >
+            <Text
+              style={{
+                fontSize: moderateScale(20),
+                paddingTop: moderateScale(7),
                 fontWeight: "600",
               }}
             >
@@ -106,158 +569,653 @@ const product = () => {
             <Text
               style={{
                 fontSize: 19,
-                paddingTop: 7,
+                paddingTop: moderateScale(7),
                 fontWeight: "800",
                 color: "red",
               }}
             >
-              {"   " + product?.price}
+              {"  ₹" + product?.price}
             </Text>
-          </View>
+          </Animatable.View>
           <View
             style={{
-              display: "flex",
+              marginBottom: moderateScale(20),
+              marginTop: moderateScale(7),
               flexDirection: "row",
               justifyContent: "space-between",
+            }}
+          >
+            <View style={{ flexDirection: "row" }}>
+              <View
+                style={{
+                  backgroundColor: "#fff",
+                  shadowColor: "black",
+                  shadowOffset: { width: 5, height: verticalScale(7) },
+                  shadowRadius: 5,
+                  shadowOpacity: 0.2,
+                  padding: moderateScale(5),
+                  borderRadius: 5,
+                  marginRight: moderateScale(20),
+                  elevation: 10,
+                }}
+              >
+                <Image
+                  source={require("../../Images/processing.png")}
+                  style={{
+                    height: verticalScale(45),
+                    width: scale(45),
+                    backgroundColor: "#00ffff",
+                    borderRadius: 30,
+                  }}
+                />
+              </View>
+              <View style={{ marginRight: moderateScale(20) }}>
+                <Text
+                  style={{
+                    fontSize: 12,
+                    marginBottom: moderateScale(5),
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Duration
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 16,
+                    fontWeight: "600",
+                  }}
+                >
+                  {product?.days}
+                </Text>
+              </View>
+            </View>
+            <View style={{ flexDirection: "row" }}>
+              <View
+                style={{
+                  backgroundColor: "#fff",
+                  shadowColor: "black",
+                  shadowOffset: { width: 5, height: verticalScale(7) },
+                  shadowRadius: 5,
+                  shadowOpacity: 0.2,
+                  padding: moderateScale(7),
+                  borderRadius: 5,
+                  marginRight: moderateScale(10),
+                  elevation: 10,
+                }}
+              >
+                <Image
+                  source={require("../../Images/destination.png")}
+                  style={{
+                    height: verticalScale(45),
+                    width: scale(45),
+                    backgroundColor: "#00ffff",
+                    borderRadius: 30,
+                    padding: moderateScale(10),
+                  }}
+                />
+              </View>
+              <View style={{ marginRight: moderateScale(20) }}>
+                <Text
+                  style={{
+                    fontSize: 12,
+                    marginBottom: moderateScale(5),
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Travel Mode
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 16,
+                    fontWeight: "600",
+                  }}
+                >
+                  {product?.mode}
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          <Animatable.View
+            animation={"fadeInLeft"}
+            delay={4000}
+            duration={1000}
+            style={{
+              paddingTop: moderateScale(10),
+              display: "flex",
+              flexDirection: "row",
             }}
           >
             <View
               style={{
-                paddingTop: 9,
+                justifyContent: "space-between",
                 display: "flex",
                 flexDirection: "row",
-                alignItems: "center",
+                elevation: 20,
+                backgroundColor: "white",
+                borderRadius: moderateScale(10),
               }}
             >
-              <Image
-                source={require("../../Images/star.png")}
-                style={{ width: 20, height: 20 }}
-              />
               <Text
                 style={{
-                  fontSize: 19,
-                  fontWeight: "600",
-                  paddingLeft: 10,
-                  color: "green",
+                  fontFamily: "outfit",
+                  fontWeight: "bold",
+                  padding: moderateScale(10),
+                  color: "black",
+                  fontSize: moderateScale(17),
                 }}
               >
-                4.5
-              </Text>
-              <Text
-                style={{
-                  fontSize: 18,
-                  fontWeight: "400",
-                  paddingLeft: 10,
-                }}
-              >
-                Saller rattings
+                Traveler Name :-
               </Text>
             </View>
-          </View>
-
-          <Text style={{ paddingTop: 20, fontSize: 20, fontWeight: "600" }}>
-            Product Highlight
-          </Text>
-          <Text style={{ paddingTop: 10, marginBottom: 5, fontSize: 16 }}>
-            {product?.size}
-          </Text>
-          {/* <View
-            style={{ display: "flex", flexDirection: "row", paddingBottom: 20 }}
-          >
-            <Text style={{ paddingTop: 10, fontSize: 20, fontWeight: "600" }}>
-              Brand :
+            <Text
+              style={{
+                fontSize: moderateScale(17),
+                paddingTop: moderateScale(7),
+                paddingLeft: moderateScale(4),
+                fontWeight: "600",
+                color: "black",
+              }}
+            >
+              {" " + product?.traveler}
             </Text>
-            <Text style={{ paddingTop: 10, fontSize: 20 }}>
-              {" " + product?.short}
-            </Text>
-          </View> */}
+          </Animatable.View>
 
-          <View
+          <Animatable.View
+            animation={"fadeInLeft"}
+            delay={4200}
+            duration={1000}
             style={{
               justifyContent: "space-between",
               display: "flex",
               flexDirection: "row",
-              padding: 10,
+              paddingTop: moderateScale(15),
             }}
           >
-            <TouchableOpacity
+            <Text
               style={{
-                backgroundColor: "orange",
-                justifyContent: "center",
-                padding: 10,
-                borderRadius: 10,
+                fontFamily: "outfit",
+                backgroundColor: "#f1e4f561",
+                padding: moderateScale(10),
+                color: "black",
+                fontSize: moderateScale(17),
+                fontWeight: "bold",
+                borderRadius: moderateScale(10),
+                paddingTop: moderateScale(10),
               }}
-              onPress={() => updateModel(product)}
             >
-              <Text style={{ fontSize: 20, fontWeight: "bold" }}>Buy Now</Text>
+              Food's by This Packege :-
+            </Text>
+          </Animatable.View>
+          <Animatable.Text
+            animation={"fadeInLeft"}
+            delay={4400}
+            duration={1000}
+            style={{
+              fontSize: moderateScale(15),
+              padding: moderateScale(7),
+
+              color: "black",
+            }}
+          >
+            {product?.food}
+          </Animatable.Text>
+          <Animatable.View
+            animation={"fadeInLeft"}
+            delay={4600}
+            duration={1000}
+            style={{
+              justifyContent: "space-between",
+              display: "flex",
+              flexDirection: "row",
+            }}
+          >
+            <Text
+              style={{
+                fontFamily: "outfit",
+                backgroundColor: "#f1e4f561",
+                padding: moderateScale(10),
+                color: "black",
+                fontSize: moderateScale(17),
+                borderRadius: moderateScale(10),
+                fontWeight: "bold",
+                paddingTop: moderateScale(10),
+              }}
+            >
+              Nearby Places :-
+            </Text>
+          </Animatable.View>
+
+          <Animatable.Text
+            animation={"fadeInLeft"}
+            delay={4800}
+            duration={1000}
+            style={{
+              padding: moderateScale(10),
+              marginBottom: moderateScale(5),
+              fontSize: moderateScale(15),
+            }}
+          >
+            {product?.nearby}
+          </Animatable.Text>
+
+          <Animatable.View
+            animation={"fadeInLeft"}
+            delay={5000}
+            duration={1000}
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              elevation: 10,
+              backgroundColor: "white",
+              borderRadius: moderateScale(10),
+            }}
+          >
+            <View
+              style={{
+                justifyContent: "space-between",
+                display: "flex",
+                flexDirection: "row",
+              }}
+            >
+              <Text
+                style={{
+                  fontFamily: "outfit",
+                  fontWeight: "bold",
+                  padding: moderateScale(10),
+                  color: "black",
+                  fontSize: moderateScale(17),
+                }}
+              >
+                Traveler's Phone No.:-
+              </Text>
+            </View>
+            <Text
+              style={{
+                fontSize: moderateScale(17),
+                paddingTop: moderateScale(7),
+                fontWeight: "600",
+                color: "black",
+              }}
+            >
+              {" " + product?.phone}
+            </Text>
+          </Animatable.View>
+
+          <View
+            style={{
+              justifyContent: "space-between",
+              flexDirection: "row",
+              paddingTop: moderateScale(20),
+              paddingBottom: moderateScale(10),
+            }}
+          >
+            {/* First Button */}
+            <TouchableOpacity
+              onPress={() => updateModel(product)}
+              style={{ alignItems: "center" }}
+            >
+              <View
+                style={{
+                  position: "relative",
+                  width: moderateScale(150),
+                  height: moderateScale(50), // Increased height
+                  borderRadius: moderateScale(12),
+                  overflow: "hidden",
+                }}
+              >
+                <LottieView
+                  source={require("../../animation/Animation - 1746430298706.json")}
+                  autoPlay
+                  loop
+                  resizeMode="cover"
+                  style={{
+                    position: "absolute",
+                    width: "100%",
+                    height: "100%",
+                  }}
+                />
+                <View
+                  style={{
+                    flex: 1,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: "white",
+                      fontWeight: "bold",
+                      fontSize: moderateScale(24), // Increased font size
+                    }}
+                  >
+                    Book Now
+                  </Text>
+                </View>
+              </View>
             </TouchableOpacity>
 
+            {/* Second Button */}
             <TouchableOpacity
+              style={{ alignItems: "center" }}
               onPress={() => {
                 dispatch(addItemToCart(product));
+                showAlert();
               }}
             >
-              <Image
-                source={require("./../../Images/whatsap.png")}
-                style={{ height: 50, width: 50, paddingRight: 10 }}
-              />
+              <View
+                style={{
+                  position: "relative",
+                  width: moderateScale(150),
+                  height: moderateScale(50), // Increased height
+                  borderRadius: moderateScale(12),
+                  overflow: "hidden",
+                }}
+              >
+                <LottieView
+                  source={require("../../animation/Animation - 1746427538924.json")}
+                  autoPlay
+                  loop
+                  resizeMode="cover"
+                  style={{
+                    position: "absolute",
+                    width: "100%",
+                    height: "100%",
+                  }}
+                />
+                <View
+                  style={{
+                    flex: 1,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: "black",
+                      fontWeight: "bold",
+                      fontSize: moderateScale(24), // Increased font size
+                    }}
+                  >
+                    Add Cart
+                  </Text>
+                </View>
+              </View>
             </TouchableOpacity>
           </View>
-          <Text style={{ fontWeight: "bold", fontSize: 16, paddingBottom: 10 }}>
-            All Details
+
+          <View
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              paddingTop: moderateScale(7),
+              paddingBottom: 7,
+            }}
+          >
+            <View>
+              <Image
+                source={require("../../Images/images.png")}
+                style={{ height: verticalScale(35), width: scale(35) }}
+              />
+            </View>
+            <View
+              style={{
+                justifyContent: "space-between",
+                display: "flex",
+                flexDirection: "row",
+              }}
+            >
+              <Text
+                style={{
+                  fontFamily: "outfit",
+                  padding: moderateScale(10),
+                  color: "black",
+                  fontSize: moderateScale(15),
+                }}
+              >
+                Some Photos about this destination:-
+              </Text>
+            </View>
+          </View>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: moderateScale(20) }}
+          >
+            {[0, 2, 3, 4].map((index, i) => (
+              <View key={index} style={{ flexDirection: "row" }}>
+                <View style={styles.containers}>
+                  <Animatable.View
+                    animation="fadeInUp"
+                    delay={2000 * (i + 1)}
+                    duration={1000}
+                    style={{
+                      backgroundColor: "rgba(255,255,255,0.7)",
+                      padding: moderateScale(3),
+                      borderRadius: moderateScale(15),
+                    }}
+                  >
+                    <Image
+                      source={{ uri: product?.images[index] }}
+                      style={styles.coverImage}
+                    />
+                  </Animatable.View>
+                </View>
+              </View>
+            ))}
+          </ScrollView>
+
+          <View>
+            <Animatable.View
+              animation="fadeInDown"
+              delay={4500}
+              duration={1000}
+              style={{
+                marginTop: moderateScale(70),
+                flexDirection: "row",
+                justifyContent: "space-around",
+              }}
+            >
+              {/* All your dot and icon Image Views go here */}
+
+              <View
+                style={{
+                  padding: moderateScale(3),
+                  borderRadius: moderateScale(10),
+                }}
+              >
+                <Image
+                  source={require("../../Images/location.png")}
+                  style={{ height: verticalScale(35), width: scale(35) }}
+                />
+              </View>
+
+              <View
+                style={{
+                  padding: moderateScale(3),
+                  borderRadius: moderateScale(10),
+                  bottom: moderateScale(20),
+                }}
+              >
+                <Image
+                  source={require("../../Images/dot.png")}
+                  style={{ height: verticalScale(7), width: scale(7) }}
+                />
+              </View>
+
+              <View
+                style={{
+                  padding: moderateScale(3),
+                  borderRadius: moderateScale(10),
+                  bottom: moderateScale(38),
+                }}
+              >
+                <Image
+                  source={require("../../Images/dot.png")}
+                  style={{ height: verticalScale(7), width: scale(7) }}
+                />
+              </View>
+              <View
+                style={{
+                  padding: moderateScale(3),
+                  borderRadius: moderateScale(10),
+                  bottom: moderateScale(50),
+                }}
+              >
+                <Image
+                  source={require("../../Images/dot.png")}
+                  style={{ height: verticalScale(7), width: scale(7) }}
+                />
+              </View>
+              <View
+                style={{
+                  padding: moderateScale(3),
+                  borderRadius: moderateScale(10),
+                  bottom: moderateScale(58),
+                }}
+              >
+                <Image
+                  source={require("../../Images/dot.png")}
+                  style={{ height: verticalScale(7), width: scale(7) }}
+                />
+              </View>
+              <View
+                style={{
+                  padding: moderateScale(3),
+                  borderRadius: moderateScale(10),
+                  bottom: moderateScale(64),
+                }}
+              >
+                <Image
+                  source={require("../../Images/start.png")}
+                  style={{ height: verticalScale(20), width: 20 }}
+                />
+              </View>
+              <View
+                style={{
+                  padding: moderateScale(3),
+                  borderRadius: moderateScale(10),
+                  bottom: moderateScale(58),
+                }}
+              >
+                <Image
+                  source={require("../../Images/dot.png")}
+                  style={{ height: verticalScale(7), width: scale(7) }}
+                />
+              </View>
+              <View
+                style={{
+                  padding: moderateScale(3),
+                  borderRadius: moderateScale(10),
+                  bottom: moderateScale(50),
+                }}
+              >
+                <Image
+                  source={require("../../Images/dot.png")}
+                  style={{ height: verticalScale(7), width: scale(7) }}
+                />
+              </View>
+              <View
+                style={{
+                  padding: moderateScale(3),
+                  borderRadius: moderateScale(10),
+                  bottom: moderateScale(38),
+                }}
+              >
+                <Image
+                  source={require("../../Images/dot.png")}
+                  style={{ height: verticalScale(7), width: scale(7) }}
+                />
+              </View>
+              <View
+                style={{
+                  padding: moderateScale(3),
+                  borderRadius: moderateScale(10),
+                  bottom: moderateScale(20),
+                }}
+              >
+                <Image
+                  source={require("../../Images/dot.png")}
+                  style={{ height: verticalScale(7), width: scale(7) }}
+                />
+              </View>
+
+              <View
+                style={{
+                  padding: moderateScale(3),
+                  borderRadius: moderateScale(10),
+                }}
+              >
+                <Image
+                  source={require("../../Images/location.png")}
+                  style={{ height: verticalScale(35), width: scale(35) }}
+                />
+              </View>
+            </Animatable.View>
+
+            <Animatable.View
+              animation="fadeInUp"
+              delay={5000}
+              duration={1000}
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                marginTop: moderateScale(10),
+              }}
+            >
+              <View
+                style={{
+                  borderRadius: moderateScale(10),
+                  padding: moderateScale(3),
+                  height: 80,
+                  width: 80,
+                }}
+              >
+                <Text>{product?.sroute}</Text>
+              </View>
+              <View
+                style={{
+                  borderRadius: moderateScale(10),
+                  padding: moderateScale(3),
+                  height: 80,
+                  width: 80,
+                }}
+              >
+                <Text>{product?.route}</Text>
+              </View>
+              <View
+                style={{
+                  borderRadius: moderateScale(10),
+                  padding: moderateScale(3),
+                  height: 80,
+                  width: 80,
+                }}
+              >
+                <Text>{product?.eroute}</Text>
+              </View>
+            </Animatable.View>
+          </View>
+          <Text
+            style={{
+              fontFamily: "outfit",
+              backgroundColor: "#f1e4f561",
+              padding: moderateScale(10),
+              color: "black",
+              fontSize: moderateScale(17),
+              borderRadius: moderateScale(10),
+              fontWeight: "bold",
+              paddingTop: moderateScale(10),
+            }}
+          >
+            All Details :-
           </Text>
-          <Text style={{ color: "dimgrey", fontSize: 15 }}>
-            {product?.description}
-          </Text>
-          <Text style={{ color: "dimgrey", fontSize: 15 }}>
-            {product?.description}
-          </Text>
-          <Text style={{ color: "dimgrey", fontSize: 15 }}>
-            {product?.description}
-          </Text>
-          <Text style={{ color: "dimgrey", fontSize: 15 }}>
-            {product?.description}
-          </Text>
-          <Text style={{ color: "dimgrey", fontSize: 15 }}>
-            {product?.description}
-          </Text>
-          <Text style={{ color: "dimgrey", fontSize: 15 }}>
-            {product?.description}
-          </Text>
-          <Text style={{ color: "dimgrey", fontSize: 15 }}>
-            {product?.description}
-          </Text>
-          <Text style={{ color: "dimgrey", fontSize: 15 }}>
-            {product?.description}
-          </Text>
-          <Text style={{ color: "dimgrey", fontSize: 15 }}>
-            {product?.description}
-          </Text>
-          <Text style={{ color: "dimgrey", fontSize: 15 }}>
-            {product?.description}
-          </Text>
-          <Text style={{ color: "dimgrey", fontSize: 15 }}>
-            {product?.description}
-          </Text>
-          <Text style={{ color: "dimgrey", fontSize: 15 }}>
-            {product?.description}
-          </Text>
-          <Text style={{ color: "dimgrey", fontSize: 15 }}>
-            {product?.description}
-          </Text>
-          <Text style={{ color: "dimgrey", fontSize: 15 }}>
-            {product?.description}
-          </Text>
-          <Text style={{ color: "dimgrey", fontSize: 15 }}>
-            {product?.description}
-          </Text>
-          <Text style={{ color: "dimgrey", fontSize: 15 }}>
-            {product?.description}
-          </Text>
-          <Text style={{ color: "dimgrey", fontSize: 15 }}>
-            {product?.description}
-          </Text>
-          <Text style={{ color: "dimgrey", fontSize: 15 }}>
+          <Text
+            style={{
+              color: "dimgrey",
+              fontSize: moderateScale(15),
+              padding: moderateScale(10),
+            }}
+          >
             {product?.description}
           </Text>
         </View>
@@ -268,6 +1226,44 @@ const product = () => {
     </ScrollView>
   );
 };
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "white",
+  },
+  coverImage: {
+    height: verticalScale(200),
+    width: scale(270),
+    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0,7)",
+  },
+  containers: {
+    padding: 1,
+  },
+  shadow: {
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.35,
+    shadowRadius: 3.84,
+
+    elevation: 5,
+  },
+  container1: { flex: 1 },
+  map: { flex: 1 },
+  info: {
+    position: "absolute",
+    bottom: 30,
+    backgroundColor: "white",
+    padding: 10,
+    alignSelf: "center",
+    borderRadius: 8,
+    elevation: 5,
+    width: "90%",
+  },
+});
 
 const UserModel = (props) => {
   const [visible, setVisible] = useState(false);
@@ -275,19 +1271,45 @@ const UserModel = (props) => {
     setVisible(true);
     setTimeout(() => {
       setVisible(false);
-    }, 3000);
+    }, 2000);
   };
 
   const postApiUrl = "https://project-x-five-smoky.vercel.app/api/order";
+
   const [responseMessage, setResponseMessage] = useState("");
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [ardhar, setArdhar] = useState("");
+  const [error, setError] = useState("");
+  const [ardharError, setArdharError] = useState("");
+  const [userData, setUserData] = useState({
+    name: "",
+    phone: "",
+    address: "",
+    email: "",
+  });
 
-  const [selectedSize, setSelectedSize] = useState(null);
+  const validateArdhar = (text) => {
+    const digitsOnly = text.replace(/[^0-9]/g, "");
+    setArdhar(digitsOnly);
 
-  const sizes = ["S", "M", "L", "XL"];
-
-  const handleSizeSelect = (big) => {
-    setSelectedSize(big);
+    if (digitsOnly.length !== 12) {
+      setArdharError("Aadhaar  12 digits");
+    } else {
+      setArdharError("");
+    }
   };
+
+  // const validatePhone = (text) => {
+  //   const digitsOnly = text.toString().replace(/[^0-9]/g, "");
+  //   setPhone(digitsOnly);
+
+  //   if (digitsOnly.length !== 10) {
+  //     setError("Phone number 10 digits");
+  //   } else {
+  //     setError("");
+  //   }
+  // };
 
   const sendPostRequest = async () => {
     try {
@@ -295,7 +1317,13 @@ const UserModel = (props) => {
         title: props.selectedUser.title,
         description: props.selectedUser.description,
         price: props.selectedUser.price,
-        big: selectedSize,
+        traveler: props.selectedUser.traveler,
+        name: userData.name,
+        email: userData.email,
+        place: props.selectedUser.place,
+        address: userData.address,
+        phone: userData.phone,
+        ardhar: ardhar,
         images: props.selectedUser.images[0],
       };
 
@@ -313,17 +1341,32 @@ const UserModel = (props) => {
 
       setTimeout(() => {
         props.setShowModel(false);
-      }, 3000);
+      }, 2000);
 
       // showTost();
 
-      // console.log("POST Success:", result);
+      console.log("POST Success:", result);
       // alert("order Placed");
     } catch (error) {
-      // console.error("Error:", error);
+      console.error("Error:", error);
       setResponseMessage("Error in sending request");
     }
   };
+
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        const name = await AsyncStorage.getItem("NAME");
+        const phone = await AsyncStorage.getItem("MOBILE");
+        const address = await AsyncStorage.getItem("ADDRESS");
+        const email = await AsyncStorage.getItem("EMAIL");
+        setUserData({ name, phone, address, email });
+      } catch (err) {
+        console.log("Error loading user data:", err);
+      }
+    };
+    loadUserData();
+  }, []);
 
   // console.warn(props.selectedUser);
   return (
@@ -341,14 +1384,16 @@ const UserModel = (props) => {
           flex: 1,
           textAlign: "center",
           justifyContent: "center",
+          height: "100%",
+          width: "100%",
           overflow: "hidden",
         }}
       >
         <View
           style={{
             backgroundColor: "#fff",
-            padding: 20,
-            borderRadius: 10,
+            padding: moderateScale(2),
+            borderRadius: moderateScale(10),
             shadowColor: "#000",
             shadowOpacity: 0.3,
             elevation: 5,
@@ -368,8 +1413,8 @@ const UserModel = (props) => {
               style={{
                 width: 120,
                 height: 160,
-                resizeMode: "contain",
-                marginTop: 10,
+                resizeMode: "cover",
+                marginTop: moderateScale(7),
                 borderRadius: 20,
                 backgroundColor: "#fff",
                 alignSelf: "center",
@@ -377,46 +1422,97 @@ const UserModel = (props) => {
                 shadowColor: "cyan",
               }}
             />
-            <View style={{ gap: 10, paddingTop: 10 }}>
+            <View style={{ gap: 10, paddingTop: moderateScale(10) }}>
               <Text
                 numberOfLines={2}
                 style={{
                   numberOfLines: 0.1,
                   ellipsizeMode: "tail",
                   maxWidth: 200,
-                  fontSize: 15,
+                  fontSize: moderateScale(15),
                 }}
               >
-                Name : {props.selectedUser.title}
+                {props.selectedUser.title}
               </Text>
-              <Text style={{ fontSize: 20, fontWeight: "bold" }}>
-                select size
-              </Text>
-              <ScrollView
-                horizontal={true}
-                showsHorizontalScrollIndicator={false}
-                style={{ gap: 2 }}
+              <Text
+                numberOfLines={2}
+                style={{
+                  numberOfLines: 0.1,
+                  ellipsizeMode: "tail",
+                  maxWidth: 200,
+                  fontSize: moderateScale(15),
+                }}
               >
-                <Text style={{ fonts }}>hhhhhhhh</Text>
-                {sizes.map((big) => (
-                  <TouchableOpacity
-                    key={big}
-                    onPress={() => handleSizeSelect(big)}
-                    style={{
-                      padding: 5,
-                      margin: 5,
-                      // flexDirection: "row",
-                      backgroundColor: selectedSize === big ? "blue" : "gray",
-                      borderRadius: 5,
-                    }}
-                  >
-                    <Text style={{ color: "white", textAlign: "center" }}>
-                      {big}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-              <Text style={{ fontSize: 20, fontWeight: "bold" }}>
+                {props.selectedUser.traveler}
+              </Text>
+              {/* 👇 Display Signup Data from AsyncStorage */}
+              <View style={{ paddingVertical: 10 }}>
+                <Text style={{ fontWeight: "bold", fontSize: 16 }}>
+                  User Info:
+                </Text>
+                <Text>Name: {userData.name}</Text>
+                <Text>Phone: {userData.phone}</Text>
+                <Text
+                  numberOfLines={1}
+                  style={{
+                    numberOfLines: 0.1,
+                    ellipsizeMode: "tail",
+                    maxWidth: 200,
+                  }}
+                >
+                  Address: {userData.address}
+                </Text>
+              </View>
+              <View style={{ padding: moderateScale(10), marginRight: 10 }}>
+                <Text style={{ fontSize: 18 }}>Enter your details</Text>
+
+                {/* <TextInput
+                  placeholder="Name"
+                  value={name}
+                  onChangeText={setName}
+                  style={{
+                    borderWidth: 1,
+                    borderColor: "#ccc",
+                    padding: moderateScale(10),
+                    marginBottom: moderateScale(10),
+                    borderRadius: 5,
+                  }}
+                /> */}
+
+                <TextInput
+                  placeholder="Aadhaar number"
+                  value={ardhar}
+                  onChangeText={validateArdhar}
+                  maxLength={12}
+                  keyboardType="numeric"
+                  style={{
+                    borderWidth: 1,
+                    borderColor: "#ccc",
+                    padding: moderateScale(10),
+                    marginBottom: moderateScale(10),
+                    borderRadius: 5,
+                  }}
+                />
+                {ardharError ? (
+                  <Text style={{ color: "red" }}>{ardharError}</Text>
+                ) : null}
+
+                {/* <TextInput
+                  placeholder="Phone"
+                  value={phone}
+                  onChangeText={validatePhone}
+                  maxLength={10}
+                  keyboardType="phone-pad"
+                  style={{
+                    borderWidth: 1,
+                    borderColor: "#ccc",
+                    padding: moderateScale(10),
+                    marginBottom: moderateScale(20),
+                    borderRadius: 5,
+                  }}
+                /> */}
+              </View>
+              <Text style={{ fontSize: moderateScale(20), fontWeight: "bold" }}>
                 Price : {" ₹ " + props.selectedUser.price}
               </Text>
             </View>
@@ -431,32 +1527,39 @@ const UserModel = (props) => {
           >
             <TouchableOpacity
               style={{
-                borderRadius: 10,
-                padding: 10,
+                borderRadius: moderateScale(10),
+                padding: moderateScale(10),
                 backgroundColor: "peru",
-                marginTop: 20,
+                marginTop: moderateScale(20),
                 elevation: 10,
               }}
               onPress={() => props.setShowModel(false)}
             >
-              <Text style={{ fontSize: 20, fontWeight: "bold" }}>
-                Close Now
+              <Text style={{ fontSize: moderateScale(20), fontWeight: "bold" }}>
+                Close
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => {
-                sendPostRequest();
-                showTost();
+                if (!error && !ardharError && ardhar) {
+                  sendPostRequest();
+                  showTost();
+                } else {
+                  setError("Please fill all fields correctly");
+                }
               }}
+              disabled={!!error || !ardhar}
               style={{
-                borderRadius: 10,
-                padding: 10,
-                backgroundColor: "lime",
-                marginTop: 20,
+                borderRadius: moderateScale(10),
+                padding: moderateScale(10),
+                backgroundColor: !!error || !ardhar ? "gray" : "lime",
+                marginTop: moderateScale(20),
                 elevation: 10,
               }}
             >
-              <Text style={{ fontSize: 20, fontWeight: "bold" }}>Buy Now</Text>
+              <Text style={{ fontSize: moderateScale(20), fontWeight: "bold" }}>
+                Book Now
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
