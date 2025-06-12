@@ -1,26 +1,22 @@
 import {
-  FlatList,
   Image,
   StyleSheet,
   Text,
   View,
   Modal,
-  Button,
   TouchableOpacity,
   ScrollView,
-  ActivityIndicator,
-  Linking,
   TouchableWithoutFeedback,
   Animated,
   Dimensions,
 } from "react-native";
-import React, { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import axios from "axios";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { BlurView } from "expo-blur";
 import AnimatedTost from "../../animated/AnimatedTost";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import LottieView from "lottie-react-native";
 import {
   addItemToCart,
@@ -33,8 +29,6 @@ import { Alert } from "react-native";
 import { moderateScale, scale, verticalScale } from "react-native-size-matters";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Animatable from "react-native-animatable";
-import * as Location from "expo-location";
-import MapView, { Marker } from "react-native-maps";
 
 const Width = Dimensions.get("window").width;
 const AnimatedBn = Animatable.createAnimatableComponent(TouchableOpacity);
@@ -71,7 +65,7 @@ const product = () => {
   const showAlert = () => {
     Alert.alert(
       "Hello!",
-      "Your packege is added in wishlist",
+      "Your packege is added in Cart",
       [
         {
           text: "OK",
@@ -111,119 +105,11 @@ const product = () => {
     setIsWishlisted(!isWishlisted);
   };
 
-  // destination
-
-  const [userLocation, setUserLocation] = useState(null);
-  const [destination, setDestination] = useState(null);
-  const [distance, setDistance] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [showDistanceModal, setShowDistanceModal] = useState(false);
-
-  useEffect(() => {
-    const fetchProductLocation = async () => {
-      try {
-        const response = await fetch(
-          `https://project-x-five-smoky.vercel.app/api/products?id=${id}`
-        );
-        const data = await response.json();
-
-        if (data && data.place) {
-          const place = data.place;
-
-          const geocodeResponse = await fetch(
-            `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
-              place
-            )}&format=json`,
-            {
-              headers: {
-                "User-Agent": "Shopcart/1.0 (nitunandi1985@gmail.com)",
-                "Accept-Language": "en",
-              },
-            }
-          );
-
-          const geocodeData = await geocodeResponse.json();
-          // console.log("Geocode result:", geocodeData);
-
-          if (geocodeData && geocodeData.length > 0) {
-            const { lat, lon } = geocodeData[0];
-            setDestination({
-              latitude: parseFloat(lat),
-              longitude: parseFloat(lon),
-              name: place,
-            });
-          } else {
-            console.log("could not find coordinates");
-          }
-        } else {
-          Alert.alert("API Error", "No product data found.");
-        }
-      } catch (error) {
-        console.error("Error fetching product data:", error);
-        Alert.alert(
-          "Error",
-          "There was an issue fetching data or formatting it."
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (id) {
-      fetchProductLocation();
-    }
-  }, [id]);
-
-  useEffect(() => {
-    const getUserLocation = async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert("Permission Denied", "Location permission is required.");
-        return;
-      }
-
-      const userLoc = await Location.getCurrentPositionAsync({});
-      setUserLocation(userLoc.coords);
-    };
-
-    getUserLocation();
-  }, []);
-
-  function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
-    const R = 6371;
-    const dLat = ((lat2 - lat1) * Math.PI) / 180;
-    const dLon = ((lon2 - lon1) * Math.PI) / 180;
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos((lat1 * Math.PI) / 180) *
-        Math.cos((lat2 * Math.PI) / 180) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-  }
-
-  if (loading || !userLocation || !destination) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" />
-        <Text>Loading ...</Text>
-      </View>
-    );
-  }
-
-  const dist = getDistanceFromLatLonInKm(
-    userLocation.latitude,
-    userLocation.longitude,
-    destination.latitude,
-    destination.longitude
-  );
-
   return (
     <ScrollView>
       <View>
         <Animatable.View
-          animation="fadeInUpBig"
+          animation="fadeInUp"
           duration={1200}
           style={{
             width: "100%",
@@ -468,54 +354,6 @@ const product = () => {
               -----:Hurry Up Guyes:-----
             </Text>
           </LinearGradient>
-
-          <View style={{ marginTop: 5 }}>
-            <TouchableOpacity
-              style={{
-                borderRadius: 10,
-                padding: 10,
-                backgroundColor: "white",
-                elevation: 5,
-                justifyContent: "center",
-                alignItems: "center",
-              }}
-              onPress={() => setShowDistanceModal(true)}
-            >
-              <Text
-                style={{ fontSize: 18, color: "black", fontWeight: "bold" }}
-              >
-                Show Lodcation
-              </Text>
-            </TouchableOpacity>
-
-            <Modal visible={showDistanceModal} animationType="slide">
-              <View style={styles.container1}>
-                <MapView
-                  style={styles.map}
-                  initialRegion={{
-                    latitude: userLocation.latitude,
-                    longitude: userLocation.longitude,
-                    latitudeDelta: 0.1,
-                    longitudeDelta: 0.1,
-                  }}
-                >
-                  <Marker coordinate={userLocation} title="You are here" />
-                  <Marker coordinate={destination} title={destination.name} />
-                </MapView>
-                <View style={styles.info}>
-                  <Text>Distance to destination: {dist.toFixed(2)} km</Text>
-                  <Text>
-                    Directions: From your current location to {destination.name}
-                    .
-                  </Text>
-                  <Button
-                    title="Close"
-                    onPress={() => setShowDistanceModal(false)}
-                  />
-                </View>
-              </View>
-            </Modal>
-          </View>
 
           <Animatable.View
             animation={"fadeInLeft"}
@@ -1263,6 +1101,40 @@ const styles = StyleSheet.create({
     elevation: 5,
     width: "90%",
   },
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  button: {
+    borderRadius: 10,
+    padding: 12,
+    backgroundColor: "white",
+    elevation: 5,
+    justifyContent: "center",
+    alignItems: "center",
+    marginHorizontal: 20,
+    marginBottom: 10,
+  },
+  buttonText: {
+    fontSize: 18,
+    color: "black",
+    fontWeight: "bold",
+  },
+  container: {
+    flex: 1,
+  },
+  map: {
+    flex: 1,
+  },
+  info: {
+    padding: 16,
+    backgroundColor: "#fff",
+  },
+  text: {
+    fontSize: 16,
+    marginBottom: 8,
+  },
 });
 
 const UserModel = (props) => {
@@ -1299,17 +1171,6 @@ const UserModel = (props) => {
       setArdharError("");
     }
   };
-
-  // const validatePhone = (text) => {
-  //   const digitsOnly = text.toString().replace(/[^0-9]/g, "");
-  //   setPhone(digitsOnly);
-
-  //   if (digitsOnly.length !== 10) {
-  //     setError("Phone number 10 digits");
-  //   } else {
-  //     setError("");
-  //   }
-  // };
 
   const sendPostRequest = async () => {
     try {
@@ -1466,19 +1327,6 @@ const UserModel = (props) => {
               <View style={{ padding: moderateScale(10), marginRight: 10 }}>
                 <Text style={{ fontSize: 18 }}>Enter your details</Text>
 
-                {/* <TextInput
-                  placeholder="Name"
-                  value={name}
-                  onChangeText={setName}
-                  style={{
-                    borderWidth: 1,
-                    borderColor: "#ccc",
-                    padding: moderateScale(10),
-                    marginBottom: moderateScale(10),
-                    borderRadius: 5,
-                  }}
-                /> */}
-
                 <TextInput
                   placeholder="Aadhaar number"
                   value={ardhar}
@@ -1496,21 +1344,6 @@ const UserModel = (props) => {
                 {ardharError ? (
                   <Text style={{ color: "red" }}>{ardharError}</Text>
                 ) : null}
-
-                {/* <TextInput
-                  placeholder="Phone"
-                  value={phone}
-                  onChangeText={validatePhone}
-                  maxLength={10}
-                  keyboardType="phone-pad"
-                  style={{
-                    borderWidth: 1,
-                    borderColor: "#ccc",
-                    padding: moderateScale(10),
-                    marginBottom: moderateScale(20),
-                    borderRadius: 5,
-                  }}
-                /> */}
               </View>
               <Text style={{ fontSize: moderateScale(20), fontWeight: "bold" }}>
                 Price : {" ₹ " + props.selectedUser.price}

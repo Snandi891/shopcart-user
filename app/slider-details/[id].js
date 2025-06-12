@@ -1,23 +1,20 @@
 import {
-  FlatList,
   Image,
   StyleSheet,
   Text,
   View,
   Modal,
-  Button,
   TouchableOpacity,
   ScrollView,
-  Linking,
   Dimensions,
 } from "react-native";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import axios from "axios";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { BlurView } from "expo-blur";
 import AnimatedTost from "../../animated/AnimatedTost";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   addItemToCart,
@@ -70,7 +67,7 @@ const slider = () => {
   const showAlert = () => {
     Alert.alert(
       "Hello!",
-      "Your packege is added in wishlist",
+      "Your packege is added in Cart",
       [
         {
           text: "OK",
@@ -85,7 +82,7 @@ const slider = () => {
     <ScrollView>
       <View>
         <Animatable.View
-          animation="fadeInUpBig"
+          animation="fadeInUp"
           duration={1200}
           style={{
             width: "100%",
@@ -1160,17 +1157,6 @@ const UserModel = (props) => {
     }
   };
 
-  // const validatePhone = (text) => {
-  //   const digitsOnly = text.toString().replace(/[^0-9]/g, "");
-  //   setPhone(digitsOnly);
-
-  //   if (digitsOnly.length !== 10) {
-  //     setError("Phone number 10 digits");
-  //   } else {
-  //     setError("");
-  //   }
-  // };
-
   const sendPostRequest = async () => {
     try {
       const data = {
@@ -1326,19 +1312,6 @@ const UserModel = (props) => {
               <View style={{ padding: moderateScale(10), marginRight: 10 }}>
                 <Text style={{ fontSize: 18 }}>Enter your details</Text>
 
-                {/* <TextInput
-                  placeholder="Name"
-                  value={name}
-                  onChangeText={setName}
-                  style={{
-                    borderWidth: 1,
-                    borderColor: "#ccc",
-                    padding: moderateScale(10),
-                    marginBottom: moderateScale(10),
-                    borderRadius: 5,
-                  }}
-                /> */}
-
                 <TextInput
                   placeholder="Aadhaar number"
                   value={ardhar}
@@ -1356,21 +1329,6 @@ const UserModel = (props) => {
                 {ardharError ? (
                   <Text style={{ color: "red" }}>{ardharError}</Text>
                 ) : null}
-
-                {/* <TextInput
-                  placeholder="Phone"
-                  value={phone}
-                  onChangeText={validatePhone}
-                  maxLength={10}
-                  keyboardType="phone-pad"
-                  style={{
-                    borderWidth: 1,
-                    borderColor: "#ccc",
-                    padding: moderateScale(10),
-                    marginBottom: moderateScale(20),
-                    borderRadius: 5,
-                  }}
-                /> */}
               </View>
               <Text style={{ fontSize: moderateScale(20), fontWeight: "bold" }}>
                 Price : {" ₹ " + props.selectedUser.price}

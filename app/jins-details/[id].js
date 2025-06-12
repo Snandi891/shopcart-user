@@ -1,26 +1,27 @@
 import {
-  FlatList,
   Image,
   StyleSheet,
   Text,
   View,
   Modal,
-  Button,
   TouchableOpacity,
   ScrollView,
-  Linking,
+  TouchableWithoutFeedback,
+  Animated,
   Dimensions,
 } from "react-native";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import axios from "axios";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { BlurView } from "expo-blur";
 import AnimatedTost from "../../animated/AnimatedTost";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
+import LottieView from "lottie-react-native";
 import {
   addItemToCart,
   addToWishlist,
+  removeFromWishlist,
 } from "../../components/redux/actions/Actions";
 import { LinearGradient } from "expo-linear-gradient";
 import { TextInput } from "react-native";
@@ -28,7 +29,6 @@ import { Alert } from "react-native";
 import { moderateScale, scale, verticalScale } from "react-native-size-matters";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Animatable from "react-native-animatable";
-import LottieView from "lottie-react-native";
 
 const Width = Dimensions.get("window").width;
 const AnimatedBn = Animatable.createAnimatableComponent(TouchableOpacity);
@@ -65,7 +65,7 @@ const jinsdata = () => {
   const showAlert = () => {
     Alert.alert(
       "Hello!",
-      "Your packege is added in wishlist",
+      "Your packege is added in Cart",
       [
         {
           text: "OK",
@@ -76,11 +76,40 @@ const jinsdata = () => {
     );
   };
 
+  const [isWishlisted, setIsWishlisted] = useState(false);
+
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  const handlePress = () => {
+    // Animate scale pop
+    Animated.sequence([
+      Animated.timing(scaleAnim, {
+        toValue: 1.3,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    // Dispatch to wishlist
+    if (isWishlisted) {
+      dispatch(removeFromWishlist(product));
+    } else {
+      dispatch(addToWishlist(product));
+    }
+
+    setIsWishlisted(!isWishlisted);
+  };
+
   return (
     <ScrollView>
       <View>
         <Animatable.View
-          animation="fadeInUpBig"
+          animation="fadeInUp"
           duration={1200}
           style={{
             width: "100%",
@@ -125,15 +154,16 @@ const jinsdata = () => {
                   color="black"
                 />
               </AnimatedBn>
-              <AnimatedBn
-                animation={"slideInRight"}
-                delay={1000}
-                duration={1000}
-                onPress={() => {
-                  dispatch(addToWishlist(product));
-                }}
-              >
-                <Ionicons name="heart-outline" size={34} color="white" />
+              <AnimatedBn animation="slideInRight" delay={1000} duration={1000}>
+                <TouchableWithoutFeedback onPress={handlePress}>
+                  <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+                    <Ionicons
+                      name={isWishlisted ? "heart" : "heart-outline"}
+                      size={34}
+                      color={isWishlisted ? "red" : "white"} // ✅ manual toggle
+                    />
+                  </Animated.View>
+                </TouchableWithoutFeedback>
               </AnimatedBn>
             </View>
             <View
@@ -1058,6 +1088,18 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
 
     elevation: 5,
+  },
+  container1: { flex: 1 },
+  map: { flex: 1 },
+  info: {
+    position: "absolute",
+    bottom: 30,
+    backgroundColor: "white",
+    padding: 10,
+    alignSelf: "center",
+    borderRadius: 8,
+    elevation: 5,
+    width: "90%",
   },
 });
 

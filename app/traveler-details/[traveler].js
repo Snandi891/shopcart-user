@@ -11,6 +11,7 @@ import axios from "axios";
 import { useLocalSearchParams } from "expo-router";
 
 import TravelerBusiness from "../../components/Home/TravelerBusiness";
+import LottieView from "lottie-react-native";
 
 const TravelerDetails = () => {
   const { traveler } = useLocalSearchParams();
@@ -50,10 +51,16 @@ const TravelerDetails = () => {
 
   if (loading) {
     return (
-      <ActivityIndicator
-        size="large"
-        color="#0000ff"
-        style={{ marginTop: "50%" }}
+      <LottieView
+        source={require("../../animation/Animation - 1746197477833.json")}
+        autoPlay
+        loop
+        style={{
+          width: 200,
+          height: 200,
+          alignSelf: "center",
+          marginTop: "50%",
+        }}
       />
     );
   }
@@ -61,7 +68,7 @@ const TravelerDetails = () => {
   return (
     <View style={{ flex: 1, padding: 20 }}>
       <Text style={{ fontSize: 22, fontWeight: "bold", marginBottom: 10 }}>
-        Products by {traveler}
+        Travels by this traveler : {traveler}
       </Text>
 
       {products.length === 0 ? (

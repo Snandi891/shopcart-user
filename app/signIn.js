@@ -10,9 +10,11 @@ import {
 import React from "react";
 import LottieView from "lottie-react-native";
 import { useRouter } from "expo-router";
-import ElevatedView from "react-native-elevated-view";
+// import ElevatedView from "react-native-elevated-view";
 import { scale, verticalScale, moderateScale } from "react-native-size-matters";
 import * as Animatable from "react-native-animatable";
+import { LinearGradient } from "expo-linear-gradient";
+// import LinearGradient from "react-native-linear-gradient";
 
 const AnimatedBn = Animatable.createAnimatableComponent(TouchableOpacity);
 
@@ -59,6 +61,9 @@ const SignIn = () => {
                   color: "#e7d5f5",
                   textAlign: "left",
                   fontWeight: "600",
+                  textShadowColor: "black",
+                  textShadowOffset: { width: 2, height: 1 },
+                  textShadowRadius: 2,
                 }}
                 animation={"fadeInUp"}
                 delay={600}
@@ -100,31 +105,37 @@ const SignIn = () => {
                 animation="fadeInUp"
                 delay={200}
               >
-                <ElevatedView
+                <LinearGradient
+                  colors={["#7b26bd", "#a34acb"]} // Customize these gradient colors
+                  start={{ x: 0, y: 1 }}
+                  end={{ x: 1, y: 0 }}
                   style={{
-                    width: scale(100),
+                    width: scale(140),
                     borderRadius: 60,
                     height: verticalScale(50),
                     margin: moderateScale(10),
-                    backgroundColor: "#7b26bd",
                     justifyContent: "center",
                     alignItems: "center",
                     shadowColor: "blue",
-                    shadowOffset: {
-                      width: 0,
-                      height: 12,
-                    },
-                    shadowOpacity: 0.58,
-                    shadowRadius: 16.0,
-                    elevation: 24,
+                    shadowOffset: { width: 5, height: 12 },
+                    shadowOpacity: 1.58,
+                    shadowRadius: 20,
+                    elevation: 34,
                   }}
                 >
                   <Text
-                    style={{ fontSize: 25, fontWeight: "bold", color: "#fff" }}
+                    style={{
+                      fontSize: 25,
+                      fontWeight: "bold",
+                      color: "#fff",
+                      textShadowColor: "black",
+                      textShadowOffset: { width: 2, height: 1 },
+                      textShadowRadius: 2,
+                    }}
                   >
-                    Enter
+                    Get Started
                   </Text>
-                </ElevatedView>
+                </LinearGradient>
               </AnimatedBn>
             </View>
           </View>

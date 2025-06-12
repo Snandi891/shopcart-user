@@ -134,7 +134,6 @@ function Traveler() {
           flexGrow: 1,
           justifyContent: "center",
           alignItems: "center",
-          paddingVertical: moderateScale(20),
         }}
       >
         <View
@@ -143,7 +142,7 @@ function Traveler() {
             backgroundColor: "white",
             padding: moderateScale(4),
             borderRadius: 10,
-            marginBottom: moderateScale(10),
+            marginTop: moderateScale(10),
           }}
         >
           <Text style={{ fontSize: 18, fontWeight: "bold" }}>All Traveler</Text>

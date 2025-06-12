@@ -1,4 +1,3 @@
-// ContactScreen.js
 import React from "react";
 import {
   StyleSheet,
@@ -15,11 +14,11 @@ const ContactScreen = () => {
   };
 
   const handleCall = () => {
-    Linking.openURL("tel:+8918960117");
+    Linking.openURL("tel:+7865089698");
   };
 
   const handleSMS = () => {
-    Linking.openURL("sms:+8918960117");
+    Linking.openURL("sms:+7865089698");
   };
 
   return (

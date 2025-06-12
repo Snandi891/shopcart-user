@@ -87,6 +87,9 @@ const BusinessName = ({ item, onAddToCart, onAddWishlist, index }) => {
                   fontWeight: "700",
                   marginLeft: moderateScale(10),
                   paddingTop: moderateScale(7),
+                  textShadowColor: "black",
+                  textShadowOffset: { width: 2, height: 1 },
+                  textShadowRadius: 2,
                 }}
               >
                 {item?.title}

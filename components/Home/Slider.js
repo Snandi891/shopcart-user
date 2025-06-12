@@ -138,6 +138,10 @@ function Slider() {
                         paddingTop: moderateScale(5),
                         maxWidth: 200,
                         fontSize: 18,
+                        textShadowColor: "black",
+                        textShadowOffset: { width: 2, height: 1 },
+                        textShadowRadius: 2,
+                        top: 30,
                       }}
                     >
                       {item.title}

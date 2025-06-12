@@ -42,7 +42,7 @@ const TravelerBusiness = ({ item }) => {
           </Text>
 
           <Text style={{ fontWeight: "bold", marginTop: 5 }}>
-            Price: ${item.price}
+            Price: ₹ {item.price}
           </Text>
 
           <Text style={{ color: "#888", marginTop: 5 }}>

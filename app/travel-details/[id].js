@@ -1,15 +1,11 @@
 import {
-  FlatList,
   Image,
   StyleSheet,
   Text,
   View,
   Modal,
-  Button,
   TouchableOpacity,
   ScrollView,
-  ActivityIndicator,
-  Linking,
   Dimensions,
 } from "react-native";
 import React, { useEffect, useState } from "react";
@@ -18,7 +14,7 @@ import axios from "axios";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { BlurView } from "expo-blur";
 import AnimatedTost from "../../animated/AnimatedTost";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import {
   addItemToCart,
   addToWishlist,
@@ -87,7 +83,7 @@ const travel = () => {
   const showAlert = () => {
     Alert.alert(
       "Hello!",
-      "Your packege is added in wishlist",
+      "Your packege is added in Cart",
       [
         {
           text: "OK",
@@ -101,7 +97,17 @@ const travel = () => {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" />
+        <LottieView
+          source={require("../../animation/Animation - 1746197477833.json")}
+          autoPlay
+          loop
+          style={{
+            width: 200,
+            height: 200,
+            alignSelf: "center",
+            marginTop: "50%",
+          }}
+        />
       </View>
     );
   }
@@ -109,7 +115,17 @@ const travel = () => {
   if (!product) {
     return (
       <View style={styles.center}>
-        <Text>No product found with this ID.</Text>
+        <LottieView
+          source={require("../../animation/Animation - 1746197477833.json")}
+          autoPlay
+          loop
+          style={{
+            width: 200,
+            height: 200,
+            alignSelf: "center",
+            marginTop: "50%",
+          }}
+        />
       </View>
     );
   }
@@ -118,8 +134,8 @@ const travel = () => {
     <ScrollView>
       <View>
         <Animatable.View
-          animation="fadeInUpBig"
-          duration={1200}
+          animation="fadeInUp"
+          duration={1000}
           style={{
             width: "100%",
             height: Width * 0.9,

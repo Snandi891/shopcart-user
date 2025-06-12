@@ -47,7 +47,7 @@ const Busness = () => {
               paddingRight: moderateScale(7),
             }}
           >
-            Flash Sale - Ends On
+            Flash offer - Ends On
           </Text>
         </Animatable.View>
         <View style={{ paddingRight: moderateScale(7) }}>
@@ -68,7 +68,7 @@ const Busness = () => {
         />
       ) : products.length === 0 ? (
         <Text style={{ textAlign: "center", marginTop: 20, fontSize: 16 }}>
-          Sorry sir, no products found.
+          Sorry sir,we updates soon
         </Text>
       ) : (
         <FlatList

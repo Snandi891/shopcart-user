@@ -1,4 +1,4 @@
-import { View, ScrollView } from "react-native";
+import { View, ScrollView, TouchableOpacity } from "react-native";
 import React from "react";
 import Header from "../../components/Home/Header";
 import Slider from "../../components/Home/Slider";
@@ -29,7 +29,8 @@ export default function home() {
           className="rounded-full"
         >
           <Header />
-          <View style={{ marginBottom: moderateScale(70) }}>
+
+          <View style={{}}>
             <Slider />
             <CategoryList />
             <View
@@ -43,21 +44,11 @@ export default function home() {
             <View
               style={{
                 marginLeft: moderateScale(13),
-                paddingBottom: moderateScale(7),
+                // paddingBottom: moderateScale(7),
               }}
             >
               <Traveler />
             </View>
-            {/* <View
-              style={{
-                marginLeft: moderateScale(13),
-                paddingBottom: moderateScale(7),
-              }}
-            >
-              <Sample />
-            </View> */}
-
-            <View style={{ height: verticalScale(50) }}></View>
           </View>
         </LinearGradient>
       </View>
