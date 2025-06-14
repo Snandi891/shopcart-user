@@ -2,6 +2,7 @@ import { View, Image } from "react-native";
 import React, { useEffect } from "react";
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as ScreenCapture from "expo-screen-capture";
 
 const Splash = () => {
   useEffect(() => {
@@ -10,6 +11,15 @@ const Splash = () => {
     }, 3000);
 
     return () => clearTimeout(timeout); // cleanup timeout
+  }, []);
+
+  // 👇 Block screenshots on mount, allow on unmount
+  useEffect(() => {
+    ScreenCapture.preventScreenCaptureAsync();
+
+    return () => {
+      ScreenCapture.allowScreenCaptureAsync();
+    };
   }, []);
 
   const getData = async () => {

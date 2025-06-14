@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import axios from "axios";
 import { useLocalSearchParams } from "expo-router";
-
+import * as ScreenCapture from "expo-screen-capture";
 import TravelerBusiness from "../../components/Home/TravelerBusiness";
 import LottieView from "lottie-react-native";
 
@@ -17,6 +17,15 @@ const TravelerDetails = () => {
   const { traveler } = useLocalSearchParams();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // 👇 Block screenshots on mount, allow on unmount
+  useEffect(() => {
+    ScreenCapture.preventScreenCaptureAsync();
+
+    return () => {
+      ScreenCapture.allowScreenCaptureAsync();
+    };
+  }, []);
 
   const fetchTravelerProducts = async () => {
     const endpoints = [

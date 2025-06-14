@@ -29,6 +29,7 @@ import { Alert } from "react-native";
 import { moderateScale, scale, verticalScale } from "react-native-size-matters";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Animatable from "react-native-animatable";
+import * as ScreenCapture from "expo-screen-capture";
 
 const Width = Dimensions.get("window").width;
 const AnimatedBn = Animatable.createAnimatableComponent(TouchableOpacity);
@@ -37,6 +38,14 @@ const product = () => {
   const { id } = useLocalSearchParams();
   const dispatch = useDispatch();
   // console.log("Product Id", id);
+  // 👇 Block screenshots on mount, allow on unmount
+  useEffect(() => {
+    ScreenCapture.preventScreenCaptureAsync();
+
+    return () => {
+      ScreenCapture.allowScreenCaptureAsync();
+    };
+  }, []);
 
   const [product, setProduct] = useState(null);
   const [showModel, setShowModel] = useState(false);

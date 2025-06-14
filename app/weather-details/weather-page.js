@@ -15,6 +15,7 @@ import {
 import * as Location from "expo-location";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
+import * as ScreenCapture from "expo-screen-capture";
 
 export default function App() {
   const [locationName, setLocationName] = useState(null);
@@ -24,6 +25,15 @@ export default function App() {
   const [forecastLoading, setForecastLoading] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [suggestions, setSuggestions] = useState([]);
+
+  // 👇 Block screenshots on mount, allow on unmount
+  useEffect(() => {
+    ScreenCapture.preventScreenCaptureAsync();
+
+    return () => {
+      ScreenCapture.allowScreenCaptureAsync();
+    };
+  }, []);
 
   const API_KEY = "32f53d4f1297c217a7e047a4af2a2ef0";
 

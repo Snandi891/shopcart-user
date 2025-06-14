@@ -7,20 +7,27 @@ import {
   Dimensions,
   TouchableOpacity,
 } from "react-native";
-import React from "react";
 import LottieView from "lottie-react-native";
 import { useRouter } from "expo-router";
-// import ElevatedView from "react-native-elevated-view";
 import { scale, verticalScale, moderateScale } from "react-native-size-matters";
 import * as Animatable from "react-native-animatable";
 import { LinearGradient } from "expo-linear-gradient";
-// import LinearGradient from "react-native-linear-gradient";
+import * as ScreenCapture from "expo-screen-capture";
 
 const AnimatedBn = Animatable.createAnimatableComponent(TouchableOpacity);
 
 const { height } = Dimensions.get("window");
 const SignIn = () => {
   const router = useRouter();
+  // 👇 Block screenshots on mount, allow on unmount
+  useEffect(() => {
+    ScreenCapture.preventScreenCaptureAsync();
+
+    return () => {
+      ScreenCapture.allowScreenCaptureAsync();
+    };
+  }, []);
+
   return (
     <View style={{ flex: 1 }}>
       <View>

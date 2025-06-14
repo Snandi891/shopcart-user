@@ -5,6 +5,7 @@ import { router } from "expo-router"; // 👈 import router
 import Loader from "../components/Common/Loader";
 import CommonButton from "../components/Common/CommonButton";
 import CustomTextInput from "../components/Common/CustomTextInput";
+import * as ScreenCapture from "expo-screen-capture";
 
 const login = () => {
   const [email, setEmail] = useState("");
@@ -12,6 +13,14 @@ const login = () => {
   const [badEmail, setBadEmail] = useState(false);
   const [badPassword, setBadPassword] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
+  // 👇 Block screenshots on mount, allow on unmount
+  useEffect(() => {
+    ScreenCapture.preventScreenCaptureAsync();
+
+    return () => {
+      ScreenCapture.allowScreenCaptureAsync();
+    };
+  }, []);
 
   const handleLogin = () => {
     setModalVisible(true);

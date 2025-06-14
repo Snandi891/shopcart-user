@@ -1,16 +1,26 @@
+import React, { useEffect } from "react";
 import { View, ScrollView, TouchableOpacity } from "react-native";
-import React from "react";
 import Header from "../../components/Home/Header";
 import Slider from "../../components/Home/Slider";
 import CategoryList from "../../components/Home/CategoryList";
 import Busness from "../../components/Home/Busness";
 import { LinearGradient } from "expo-linear-gradient";
-import { moderateScale, scale, verticalScale } from "react-native-size-matters";
+import { moderateScale } from "react-native-size-matters";
 import Traveler from "../../components/Home/Traveler";
+import * as ScreenCapture from "expo-screen-capture"; // 👈 Import here
 
-export default function home() {
+export default function Home() {
+  // 👇 Block screenshots on mount, allow on unmount
+  useEffect(() => {
+    ScreenCapture.preventScreenCaptureAsync();
+
+    return () => {
+      ScreenCapture.allowScreenCaptureAsync();
+    };
+  }, []);
+
   return (
-    <ScrollView showsVerticalScrollIndicator={false} style={{}}>
+    <ScrollView showsVerticalScrollIndicator={false}>
       <View
         style={{
           width: "100%",
@@ -22,15 +32,12 @@ export default function home() {
       >
         <LinearGradient
           colors={["rgba(194, 174, 241, 0.4)", "transparent"]}
-          style={{
-            flex: 1,
-            elevation: 30,
-          }}
+          style={{ flex: 1, elevation: 30 }}
           className="rounded-full"
         >
           <Header />
 
-          <View style={{}}>
+          <View>
             <Slider />
             <CategoryList />
             <View
@@ -41,12 +48,7 @@ export default function home() {
             >
               <Busness />
             </View>
-            <View
-              style={{
-                marginLeft: moderateScale(13),
-                // paddingBottom: moderateScale(7),
-              }}
-            >
+            <View style={{ marginLeft: moderateScale(13) }}>
               <Traveler />
             </View>
           </View>

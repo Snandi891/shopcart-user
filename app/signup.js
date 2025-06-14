@@ -12,6 +12,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import CustomTextInput from "../components/Common/CustomTextInput";
 import CommonButton from "../components/Common/CommonButton";
+import * as ScreenCapture from "expo-screen-capture";
 
 const Signup = () => {
   const [profileImage, setProfileImage] = useState(null);
@@ -35,6 +36,14 @@ const Signup = () => {
   const [badConfirmPassword, setBadConfirmPassword] = useState(false);
 
   const [buttonDisabled, setButtonDisabled] = useState(false);
+  // 👇 Block screenshots on mount, allow on unmount
+  useEffect(() => {
+    ScreenCapture.preventScreenCaptureAsync();
+
+    return () => {
+      ScreenCapture.allowScreenCaptureAsync();
+    };
+  }, []);
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
